@@ -8,8 +8,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 )
 
-// AzureKeyVaultClientFunctions are the azure golang sdk functions we use for azure key vault client
-type AzureKeyVaultClientFunctions interface {
+// azureKeyVaultCLient are the azure golang sdk functions we use for azure key vault client
+type azureKeyVaultClient interface {
 	SetSecret(ctx context.Context, name string, parameters azsecrets.SetSecretParameters, options *azsecrets.SetSecretOptions) (azsecrets.SetSecretResponse, error)
 	GetSecret(ctx context.Context, name string, version string, options *azsecrets.GetSecretOptions) (azsecrets.GetSecretResponse, error)
 	DeleteSecret(ctx context.Context, name string, options *azsecrets.DeleteSecretOptions) (azsecrets.DeleteSecretResponse, error)
@@ -17,7 +17,7 @@ type AzureKeyVaultClientFunctions interface {
 
 // AzureKeyVault represents a client connection to Azure Key Vault
 type AzureKeyVault struct {
-	client AzureKeyVaultClientFunctions
+	client azureKeyVaultClient
 }
 
 // NewAzureKeyVault attempts to authenticate with Azure and creates an Azure Key Vault client
@@ -35,7 +35,7 @@ func NewAzureKeyVault(uri string) (AzureKeyVault, error) {
 }
 
 // CreateSecret attempts to create a new secret in Azure Key Vault
-func (a AzureKeyVault) CreateSecret(ctx context.Context, name, value string) error {
+func (a AzureKeyVault) StoreSecret(ctx context.Context, name, value string) error {
 	params := azsecrets.SetSecretParameters{Value: &value}
 	_, err := a.client.SetSecret(ctx, name, params, nil)
 	if err != nil {
@@ -46,8 +46,8 @@ func (a AzureKeyVault) CreateSecret(ctx context.Context, name, value string) err
 }
 
 // ReadSecret fetches an Azure Key Vault secret by name
-func (a AzureKeyVault) ReadSecret(ctx context.Context, name string, version string) (*string, error) {
-	resp, err := a.client.GetSecret(ctx, name, version, nil)
+func (a AzureKeyVault) ReadSecret(ctx context.Context, name string) (*string, error) {
+	resp, err := a.client.GetSecret(ctx, name, "", nil)
 	if err != nil {
 		return new(string), fmt.Errorf("problem reading Azure Key Vault secret")
 	}
