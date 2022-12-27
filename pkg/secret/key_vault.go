@@ -6,5 +6,5 @@ import "context"
 type KeyVault interface {
 	StoreSecret(ctx context.Context, name, value string) error
 	ReadSecret(ctx context.Context, name string) (string, bool, error)
-	DeleteSecret(ctx context.Context, name string) error
+	DeleteSecret(ctx context.Context, name string) (bool, error)
 }

@@ -35,11 +35,12 @@ func (m *MockKeyVault) EXPECT() *MockKeyVaultMockRecorder {
 }
 
 // DeleteSecret mocks base method.
-func (m *MockKeyVault) DeleteSecret(ctx context.Context, name string) error {
+func (m *MockKeyVault) DeleteSecret(ctx context.Context, name string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteSecret", ctx, name)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteSecret indicates an expected call of DeleteSecret.

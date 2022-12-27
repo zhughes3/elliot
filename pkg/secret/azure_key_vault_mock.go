@@ -12,31 +12,31 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockazureKeyVaultClient is a mock of azureKeyVaultClient interface.
-type MockazureKeyVaultClient struct {
+// MockAzureKeyVaultClient is a mock of AzureKeyVaultClient interface.
+type MockAzureKeyVaultClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockazureKeyVaultClientMockRecorder
+	recorder *MockAzureKeyVaultClientMockRecorder
 }
 
-// MockazureKeyVaultClientMockRecorder is the mock recorder for MockazureKeyVaultClient.
-type MockazureKeyVaultClientMockRecorder struct {
-	mock *MockazureKeyVaultClient
+// MockAzureKeyVaultClientMockRecorder is the mock recorder for MockAzureKeyVaultClient.
+type MockAzureKeyVaultClientMockRecorder struct {
+	mock *MockAzureKeyVaultClient
 }
 
-// NewMockazureKeyVaultClient creates a new mock instance.
-func NewMockazureKeyVaultClient(ctrl *gomock.Controller) *MockazureKeyVaultClient {
-	mock := &MockazureKeyVaultClient{ctrl: ctrl}
-	mock.recorder = &MockazureKeyVaultClientMockRecorder{mock}
+// NewMockAzureKeyVaultClient creates a new mock instance.
+func NewMockAzureKeyVaultClient(ctrl *gomock.Controller) *MockAzureKeyVaultClient {
+	mock := &MockAzureKeyVaultClient{ctrl: ctrl}
+	mock.recorder = &MockAzureKeyVaultClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockazureKeyVaultClient) EXPECT() *MockazureKeyVaultClientMockRecorder {
+func (m *MockAzureKeyVaultClient) EXPECT() *MockAzureKeyVaultClientMockRecorder {
 	return m.recorder
 }
 
 // DeleteSecret mocks base method.
-func (m *MockazureKeyVaultClient) DeleteSecret(ctx context.Context, name string, options *azsecrets.DeleteSecretOptions) (azsecrets.DeleteSecretResponse, error) {
+func (m *MockAzureKeyVaultClient) DeleteSecret(ctx context.Context, name string, options *azsecrets.DeleteSecretOptions) (azsecrets.DeleteSecretResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteSecret", ctx, name, options)
 	ret0, _ := ret[0].(azsecrets.DeleteSecretResponse)
@@ -45,13 +45,13 @@ func (m *MockazureKeyVaultClient) DeleteSecret(ctx context.Context, name string,
 }
 
 // DeleteSecret indicates an expected call of DeleteSecret.
-func (mr *MockazureKeyVaultClientMockRecorder) DeleteSecret(ctx, name, options interface{}) *gomock.Call {
+func (mr *MockAzureKeyVaultClientMockRecorder) DeleteSecret(ctx, name, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockazureKeyVaultClient)(nil).DeleteSecret), ctx, name, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecret", reflect.TypeOf((*MockAzureKeyVaultClient)(nil).DeleteSecret), ctx, name, options)
 }
 
 // GetSecret mocks base method.
-func (m *MockazureKeyVaultClient) GetSecret(ctx context.Context, name, version string, options *azsecrets.GetSecretOptions) (azsecrets.GetSecretResponse, error) {
+func (m *MockAzureKeyVaultClient) GetSecret(ctx context.Context, name, version string, options *azsecrets.GetSecretOptions) (azsecrets.GetSecretResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSecret", ctx, name, version, options)
 	ret0, _ := ret[0].(azsecrets.GetSecretResponse)
@@ -60,13 +60,13 @@ func (m *MockazureKeyVaultClient) GetSecret(ctx context.Context, name, version s
 }
 
 // GetSecret indicates an expected call of GetSecret.
-func (mr *MockazureKeyVaultClientMockRecorder) GetSecret(ctx, name, version, options interface{}) *gomock.Call {
+func (mr *MockAzureKeyVaultClientMockRecorder) GetSecret(ctx, name, version, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockazureKeyVaultClient)(nil).GetSecret), ctx, name, version, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockAzureKeyVaultClient)(nil).GetSecret), ctx, name, version, options)
 }
 
 // SetSecret mocks base method.
-func (m *MockazureKeyVaultClient) SetSecret(ctx context.Context, name string, parameters azsecrets.SetSecretParameters, options *azsecrets.SetSecretOptions) (azsecrets.SetSecretResponse, error) {
+func (m *MockAzureKeyVaultClient) SetSecret(ctx context.Context, name string, parameters azsecrets.SetSecretParameters, options *azsecrets.SetSecretOptions) (azsecrets.SetSecretResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetSecret", ctx, name, parameters, options)
 	ret0, _ := ret[0].(azsecrets.SetSecretResponse)
@@ -75,7 +75,7 @@ func (m *MockazureKeyVaultClient) SetSecret(ctx context.Context, name string, pa
 }
 
 // SetSecret indicates an expected call of SetSecret.
-func (mr *MockazureKeyVaultClientMockRecorder) SetSecret(ctx, name, parameters, options interface{}) *gomock.Call {
+func (mr *MockAzureKeyVaultClientMockRecorder) SetSecret(ctx, name, parameters, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSecret", reflect.TypeOf((*MockazureKeyVaultClient)(nil).SetSecret), ctx, name, parameters, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSecret", reflect.TypeOf((*MockAzureKeyVaultClient)(nil).SetSecret), ctx, name, parameters, options)
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -19,86 +20,126 @@ const (
 
 type AzureKeyVaultTestSuite struct {
 	suite.Suite
-	wrapper    AzureKeyVault
-	mockClient *MockazureKeyVaultClient
-	ctx        context.Context
+	vault  azureKeyVault
+	client *MockAzureKeyVaultClient
+	ctx    context.Context
 }
 
-func (suite *AzureKeyVaultTestSuite) SetupTest() {
-	ctx := context.Background()
-	ctrl := gomock.NewController(suite.T())
-	defer ctrl.Finish()
-
-	mockClient := NewMockazureKeyVaultClient(ctrl)
-	wrapper := AzureKeyVault{client: mockClient}
-	suite.wrapper = wrapper
-	suite.mockClient = mockClient
-	suite.ctx = ctx
+func TestAzureKeyVault(t *testing.T) {
+	suite.Run(t, new(AzureKeyVaultTestSuite))
 }
 
-func (suite *AzureKeyVaultTestSuite) TestStoreSecret() {
-	val := secretValue
-	azParams := azsecrets.SetSecretParameters{Value: &val}
-	suite.mockClient.EXPECT().
-		SetSecret(gomock.Eq(suite.ctx), gomock.Eq(secretName), gomock.Eq(azParams), gomock.Nil()).
+func (s *AzureKeyVaultTestSuite) SetupTest() {
+	s.client = NewMockAzureKeyVaultClient(gomock.NewController(s.T()))
+	s.vault = azureKeyVault{s.client}
+	s.ctx = context.Background()
+}
+
+func (s *AzureKeyVaultTestSuite) TestStoreSecret() {
+	azParams := azsecrets.SetSecretParameters{Value: stringPtrFor(secretValue)}
+	s.client.EXPECT().
+		SetSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Eq(azParams), gomock.Nil()).
 		Return(azsecrets.SetSecretResponse{}, nil)
-	err := suite.wrapper.StoreSecret(suite.ctx, secretName, secretValue)
-	assert.Nil(suite.T(), err)
+	err := s.vault.StoreSecret(s.ctx, secretName, secretValue)
+	s.Nil(err)
 }
 
-func (suite *AzureKeyVaultTestSuite) TestStoreSecretWithErrs() {
-	val := secretValue
-	azParams := azsecrets.SetSecretParameters{Value: &val}
-	suite.mockClient.EXPECT().
-		SetSecret(gomock.Eq(suite.ctx), gomock.Eq(secretName), gomock.Eq(azParams), gomock.Nil()).
+func (s *AzureKeyVaultTestSuite) TestStoreSecretWithErrs() {
+	azParams := azsecrets.SetSecretParameters{Value: stringPtrFor(secretValue)}
+	s.client.EXPECT().
+		SetSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Eq(azParams), gomock.Nil()).
 		Return(azsecrets.SetSecretResponse{}, errors.New(errorMessage))
 
-	err := suite.wrapper.StoreSecret(suite.ctx, secretName, secretValue)
-	assert.Error(suite.T(), err)
-	assert.ErrorContains(suite.T(), err, "problem creating Azure Key Vault secret")
+	err := s.vault.StoreSecret(s.ctx, secretName, secretValue)
+	s.Error(err)
+	s.Equal(err.Error(), "problem setting secret: "+errorMessage)
 }
 
-func (suite *AzureKeyVaultTestSuite) TestGetSecret() {
-	val := secretValue
-	suite.mockClient.EXPECT().
-		GetSecret(gomock.Eq(suite.ctx), gomock.Eq(secretName), gomock.Eq(""), gomock.Nil()).
+func (s *AzureKeyVaultTestSuite) TestGetSecret() {
+	s.client.EXPECT().
+		GetSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Eq(""), gomock.Nil()).
 		Return(
 			azsecrets.GetSecretResponse{
 				SecretBundle: azsecrets.SecretBundle{
-					Value: &val,
+					Value: stringPtrFor(secretValue),
 				}}, nil)
 
-	secret, err := suite.wrapper.ReadSecret(suite.ctx, secretName)
-	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), *secret, val)
+	secret, found, err := s.vault.ReadSecret(s.ctx, secretName)
+	s.Nil(err)
+	s.True(found)
+	s.Equal(secret, secretValue)
 }
 
-func (suite *AzureKeyVaultTestSuite) TestGetSecretWithErrs() {
-	suite.mockClient.EXPECT().
-		GetSecret(gomock.Eq(suite.ctx), gomock.Eq(secretName), gomock.Eq(""), gomock.Nil()).
+func (s *AzureKeyVaultTestSuite) TestGetSecretWithSecretNotFoundErr() {
+	err := newSecretNotFoundError()
+	s.client.EXPECT().
+		GetSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Eq(""), gomock.Nil()).
+		Return(azsecrets.GetSecretResponse{}, err)
+
+	_, found, err := s.vault.ReadSecret(s.ctx, secretName)
+	s.Nil(err)
+	s.False(found)
+}
+
+func (s *AzureKeyVaultTestSuite) TestGetSecretWithErrs() {
+	s.client.EXPECT().
+		GetSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Eq(""), gomock.Nil()).
 		Return(azsecrets.GetSecretResponse{}, errors.New(errorMessage))
 
-	val, err := suite.wrapper.ReadSecret(suite.ctx, secretName)
-	assert.NotNil(suite.T(), err)
-	assert.Len(suite.T(), *val, 0)
+	val, found, err := s.vault.ReadSecret(s.ctx, secretName)
+	s.NotNil(err)
+	s.Equal(err.Error(), "problem reading secret: "+errorMessage)
+	s.Len(val, 0)
+	s.False(found)
 }
 
-func (suite *AzureKeyVaultTestSuite) TestDeleteSecret() {
-	suite.mockClient.EXPECT().
-		DeleteSecret(gomock.Eq(suite.ctx), gomock.Eq(secretName), gomock.Nil()).
+func (s *AzureKeyVaultTestSuite) TestDeleteSecret() {
+	s.client.EXPECT().
+		DeleteSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Nil()).
 		Return(azsecrets.DeleteSecretResponse{}, nil)
-	err := suite.wrapper.DeleteSecret(suite.ctx, secretName)
-	assert.Nil(suite.T(), err)
+	found, err := s.vault.DeleteSecret(s.ctx, secretName)
+	s.Nil(err)
+	s.True(found)
 }
 
-func (suite *AzureKeyVaultTestSuite) TestDeleteSecretWithErrs() {
-	suite.mockClient.EXPECT().
-		DeleteSecret(gomock.Eq(suite.ctx), gomock.Eq(secretName), gomock.Nil()).
+func (s *AzureKeyVaultTestSuite) TestDeleteSecretWithSecretNotFoundErr() {
+	s.client.EXPECT().
+		DeleteSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Nil()).
+		Return(azsecrets.DeleteSecretResponse{}, newSecretNotFoundError())
+	found, err := s.vault.DeleteSecret(s.ctx, secretName)
+	s.Nil(err)
+	s.False(found)
+}
+
+func (s *AzureKeyVaultTestSuite) TestDeleteSecretWithErrs() {
+	s.client.EXPECT().
+		DeleteSecret(gomock.Eq(s.ctx), gomock.Eq(secretName), gomock.Nil()).
 		Return(azsecrets.DeleteSecretResponse{}, errors.New(errorMessage))
-	err := suite.wrapper.DeleteSecret(suite.ctx, secretName)
-	assert.NotNil(suite.T(), err)
+	found, err := s.vault.DeleteSecret(s.ctx, secretName)
+
+	s.NotNil(err)
+	s.False(found)
 }
 
-func TestAzureKeyVaultTestSuite(t *testing.T) {
-	suite.Run(t, new(AzureKeyVaultTestSuite))
+func TestIsSecretNotFoundFalseCases(t *testing.T) {
+	testCases := []error{
+		&azcore.ResponseError{StatusCode: 401},
+		&azcore.ResponseError{StatusCode: 403},
+		&azcore.ResponseError{StatusCode: 500},
+	}
+
+	for _, test := range testCases {
+		respValue := isSecretNotFound(test)
+		assert.False(t, respValue)
+	}
+}
+func TestIsSecretNotFoundError(t *testing.T) {
+	respValue := isSecretNotFound(newSecretNotFoundError())
+	assert.True(t, respValue)
+}
+
+func newSecretNotFoundError() error {
+	return &azcore.ResponseError{
+		StatusCode: 404,
+	}
 }
