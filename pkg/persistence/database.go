@@ -12,7 +12,7 @@ import (
 
 // DB is a simple wrapper around sql.DB
 type DB struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 type dbConfig struct {
